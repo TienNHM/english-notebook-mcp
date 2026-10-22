@@ -6,9 +6,28 @@ import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The app (english-notebook) reads this file when it opens and imports new items.
+// Two storage modes:
+//  1) Firestore (when ENGLISH_NOTEBOOK_SERVICE_ACCOUNT and ENGLISH_NOTEBOOK_UID are set):
+//     writes to users/<uid>/items, so every device and the hosted site see the items at once.
+//  2) inbox.json (default): the app imports this file when it runs from the same folder on this PC.
 const here = path.dirname(fileURLToPath(import.meta.url));
 const INBOX = process.env.ENGLISH_NOTEBOOK_INBOX || path.resolve(here, "../english-notebook/inbox.json");
+const SA = process.env.ENGLISH_NOTEBOOK_SERVICE_ACCOUNT;
+const UID = process.env.ENGLISH_NOTEBOOK_UID;
+
+// stdout is the MCP channel, so all logging goes to stderr.
+if (!!SA !== !!UID) {
+  console.error("Set BOTH ENGLISH_NOTEBOOK_SERVICE_ACCOUNT and ENGLISH_NOTEBOOK_UID for Firestore mode (or neither for inbox.json mode).");
+  process.exit(1);
+}
+
+let col = null;
+if (SA) {
+  const { initializeApp, cert } = await import("firebase-admin/app");
+  const { getFirestore } = await import("firebase-admin/firestore");
+  initializeApp({ credential: cert(JSON.parse(await readFile(SA, "utf8"))) });
+  col = getFirestore().collection("users").doc(UID).collection("items");
+}
 
 const uid = () => Date.now().toString(36) + randomBytes(3).toString("hex");
 const clean = s => String(s ?? "").trim();
@@ -23,28 +42,41 @@ async function writeInbox(list) {
   await writeFile(tmp, JSON.stringify(list, null, 2), "utf8");
   await rename(tmp, INBOX);
 }
+
+const readAll = async () => col ? (await col.get()).docs.map(d => d.data()) : readInbox();
+
+async function saveNew(entries) {
+  if (col) {
+    const batch = col.firestore.batch();
+    for (const e of entries) batch.set(col.doc(e.id), e);
+    await batch.commit();
+  } else {
+    await writeInbox([...(await readInbox()), ...entries]);
+  }
+}
+
 const mk = (o) => ({
   id: uid(), example: "", note: "", original: "", sourceId: "", source: "claude", tags: [],
   box: 0, due: Date.now(), created: Date.now(), reviews: 0, ...o,
 });
 
-const server = new McpServer({ name: "english-notebook", version: "0.1.0" });
+const server = new McpServer({ name: "english-notebook", version: "0.2.0" });
 
 const text = z.string().min(1).describe("English text");
 const meaning = z.string().min(1).describe("Vietnamese meaning");
 const tags = z.array(z.string()).optional().describe("Short tags, e.g. work, git, meeting");
 
 async function add(entries) {
-  const list = await readInbox();
-  const seen = new Set(list.map(i => i.text.toLowerCase()));
-  const added = [], skipped = [];
+  const seen = new Set((await readAll()).map(i => String(i.text).toLowerCase()));
+  const added = [], skipped = [], fresh = [];
   for (const e of entries) {
     if (seen.has(e.text.toLowerCase())) { skipped.push(e.text); continue; }
     seen.add(e.text.toLowerCase());
-    list.push(e); added.push(e.text);
+    fresh.push(e); added.push(e.text);
   }
-  if (added.length) await writeInbox(list);
-  return { content: [{ type: "text", text: `Added ${added.length}${skipped.length ? `, skipped ${skipped.length} duplicate(s): ${skipped.join(", ")}` : ""}. Open the app to import.` }] };
+  if (fresh.length) await saveNew(fresh);
+  const where = !fresh.length ? "Nothing new to save." : col ? "Saved to Firestore; it shows in the app right away." : "Saved to inbox.json; open the app (localhost) to import.";
+  return { content: [{ type: "text", text: `Added ${added.length}${skipped.length ? `, skipped ${skipped.length} duplicate(s): ${skipped.join(", ")}` : ""}. ${where}` }] };
 }
 
 server.registerTool("add_vocabulary", {
@@ -78,11 +110,12 @@ server.registerTool("add_sentence", {
 });
 
 server.registerTool("list_inbox", {
-  description: "List items saved through this MCP server (use it to avoid adding duplicates).",
+  description: "List saved items (Firestore mode: all items in the notebook; inbox mode: items saved through this server). Use it to avoid adding duplicates.",
   inputSchema: { query: z.string().optional().describe("Filter by text or meaning"), limit: z.number().int().min(1).max(100).optional() },
 }, async ({ query, limit }) => {
   const q = clean(query).toLowerCase();
-  const rows = (await readInbox())
+  const rows = (await readAll())
+    .sort((a, b) => (a.created ?? 0) - (b.created ?? 0))
     .filter(i => !q || (i.text + " " + i.meaning).toLowerCase().includes(q))
     .slice(-(limit ?? 20))
     .map(i => `[${i.type}] ${i.text} = ${i.meaning}`);
