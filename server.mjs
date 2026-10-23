@@ -5,8 +5,11 @@ import { readFile, writeFile, rename } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createApiClient, ApiError } from "./api-client.mjs";
 
-// Two storage modes:
+// Three storage modes:
+//  0) Token (when ENGLISH_NOTEBOOK_TOKEN is set): talks to the English Notebook agent API with a personal token.
+//     No Firebase key on this machine. This is what the Claude Code plugin uses.
 //  1) Firestore (when ENGLISH_NOTEBOOK_SERVICE_ACCOUNT and ENGLISH_NOTEBOOK_UID are set):
 //     writes to users/<uid>/items, so every device and the hosted site see the items at once.
 //  2) inbox.json (default): the app imports this file when it runs from the same folder on this PC.
@@ -14,8 +17,18 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const INBOX = process.env.ENGLISH_NOTEBOOK_INBOX || path.resolve(here, "../english-notebook/inbox.json");
 const SA = process.env.ENGLISH_NOTEBOOK_SERVICE_ACCOUNT;
 const UID = process.env.ENGLISH_NOTEBOOK_UID;
+const TOKEN = process.env.ENGLISH_NOTEBOOK_TOKEN;
 
 // stdout is the MCP channel, so all logging goes to stderr.
+if (TOKEN && (SA || UID)) {
+  console.error("Use ENGLISH_NOTEBOOK_TOKEN alone, or the service account + uid pair, not both.");
+  process.exit(1);
+}
+let api = null;
+if (TOKEN) {
+  try { api = createApiClient({ baseUrl: process.env.ENGLISH_NOTEBOOK_API || undefined, token: TOKEN }); }
+  catch (e) { console.error(e.message); process.exit(1); }
+}
 if (!!SA !== !!UID) {
   console.error("Set BOTH ENGLISH_NOTEBOOK_SERVICE_ACCOUNT and ENGLISH_NOTEBOOK_UID for Firestore mode (or neither for inbox.json mode).");
   process.exit(1);
@@ -60,7 +73,13 @@ const mk = (o) => ({
   box: 0, due: Date.now(), created: Date.now(), reviews: 0, ...o,
 });
 
-const server = new McpServer({ name: "english-notebook", version: "0.2.0" });
+const server = new McpServer({ name: "english-notebook", version: "2.0.0" });
+
+// Token mode: run an API call and turn API errors into a normal tool error message.
+async function viaApi(fn) {
+  try { return { content: [{ type: "text", text: await fn() }] }; }
+  catch (e) { if (e instanceof ApiError) return { isError: true, content: [{ type: "text", text: e.message }] }; throw e; }
+}
 
 const text = z.string().min(1).describe("English text");
 const meaning = z.string().min(1).describe("Vietnamese meaning");
@@ -88,6 +107,7 @@ server.registerTool("add_vocabulary", {
     note: z.string().optional(), tags,
   },
 }, async ({ text, meaning, kind, example, note, tags }) => {
+  if (api) return viaApi(() => api.addVocabulary({ text, meaning, kind, example, note, tags }));
   const t = clean(text);
   return add([mk({ type: kind ?? (/\s/.test(t) ? "phrase" : "word"), text: t, meaning: clean(meaning),
     example: clean(example), note: clean(note), tags: tagList(tags) })]);
@@ -102,6 +122,7 @@ server.registerTool("add_sentence", {
     note: z.string().optional(), tags,
   },
 }, async ({ text, meaning, original, expressions, note, tags }) => {
+  if (api) return viaApi(() => api.addSentence({ text, meaning, original, expressions, note, tags }));
   const parent = mk({ type: "sentence", text: clean(text), meaning: clean(meaning),
     original: clean(original), note: clean(note), tags: tagList(tags) });
   const kids = (expressions ?? []).map(x => mk({ type: "phrase", text: clean(x.text), meaning: clean(x.meaning),
@@ -113,6 +134,7 @@ server.registerTool("list_inbox", {
   description: "List saved items (Firestore mode: all items in the notebook; inbox mode: items saved through this server). Use it to avoid adding duplicates.",
   inputSchema: { query: z.string().optional().describe("Filter by text or meaning"), limit: z.number().int().min(1).max(100).optional() },
 }, async ({ query, limit }) => {
+  if (api) return viaApi(() => api.listItems({ query, limit }));
   const q = clean(query).toLowerCase();
   const rows = (await readAll())
     .sort((a, b) => (a.created ?? 0) - (b.created ?? 0))

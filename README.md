@@ -3,7 +3,7 @@
 Small MCP server (stdio) so Claude Code can save vocabulary and sentences into
 [English Notebook](https://github.com/TienNHM/english-notebook).
 
-> **Version 1.0 is for people who run their own copy of the app.** Firestore mode needs a Firebase service account key of *your own* Firebase project (see [English Notebook](https://github.com/TienNHM/english-notebook) to deploy your copy). Version 2.0 will use a personal token instead, so no key file is needed. See [CHANGELOG](CHANGELOG.md).
+> **Version 2.0:** you only need a **personal token** from the app. No Firebase key, no uid. Self-hosters can still use the key mode (see "Set up Firestore mode"). See [CHANGELOG](CHANGELOG.md).
 
 ## Install as a Claude Code plugin (easiest for Claude Code)
 
@@ -15,8 +15,9 @@ claude plugin install english-notebook@tiennhm
 ```
 
 Or, inside Claude Code (version 2.1.275 or later): `/plugin install english-notebook --marketplace TienNHM/english-notebook-mcp`.
-Claude Code asks for two values: the path of your Firebase service account key and your uid (see "Set up Firestore mode" below for where to find them).
-To change them later: `/plugin configure english-notebook@tiennhm`. Restart Claude Code after installing. The skill is then available as `english-notebook:english-coach` and also starts by itself on your messages.
+Claude Code asks for one value: your **token**. Get it in the app: sign in, open **Library → 🤖 Kết nối AI agent → Tạo token**, copy it (it is shown once).
+To change it later: `/plugin configure english-notebook@tiennhm`. Restart Claude Code after installing. The skill is then available as `english-notebook:english-coach` and also starts by itself on your messages.
+Lost the token or leaked it? Revoke it in the same screen and create a new one.
 
 ## Quick start: let your AI agent set everything up
 
@@ -29,17 +30,13 @@ Set up English Notebook for me, step by step. Ask me only when you need an answe
 2. Ask me where to put the project (suggest a folder next to my other projects), then run:
    git clone https://github.com/TienNHM/english-notebook-mcp.git <folder>
    cd <folder> && npm install
-3. Ask me which storage mode I want:
-   - Firestore (works on every device): I need a Firebase service account key file (.json) and my user id (uid).
-     Tell me how to get them: Firebase console -> Project settings -> Service accounts -> Generate new private key;
-     uid is in Authentication -> Users. Ask me only for the FILE PATH and the uid.
-     Never open, print, copy or commit the key file. Never put it inside a git repo.
-   - inbox.json (no key, localhost only): set no variables.
+3. Ask me for my English Notebook agent token (starts with enb_). Tell me how to get it: sign in to the app,
+   Library -> "Kết nối AI agent" -> create a token. If I use my own Firebase project instead, ask for the service account
+   FILE PATH and my uid (never open, print, copy or commit the key file) and use the key mode.
 4. Register the MCP server named "english-notebook" for the agent you are running in, with `node <folder>/server.mjs`
-   and the two env vars ENGLISH_NOTEBOOK_SERVICE_ACCOUNT (key path) and ENGLISH_NOTEBOOK_UID (uid) in Firestore mode:
-   - Claude Code: claude mcp add --scope user --env ... english-notebook -- node <folder>/server.mjs
+   and the env var ENGLISH_NOTEBOOK_TOKEN (or ENGLISH_NOTEBOOK_SERVICE_ACCOUNT + ENGLISH_NOTEBOOK_UID in key mode; set both or neither):
+   - Claude Code: claude mcp add --scope user --env ENGLISH_NOTEBOOK_TOKEN=<token> english-notebook -- node <folder>/server.mjs
    - Cursor: ~/.cursor/mcp.json   - other agents: that agent's MCP config file (JSON "mcpServers").
-   Set BOTH env vars or neither.
 5. Install the English Coach skill for this agent, copying from <folder>:
    - Claude Code: skills/english-coach -> ~/.claude/skills/english-coach
    - Cursor: rules/cursor/english-coach.mdc -> .cursor/rules/english-coach.mdc in my project
@@ -58,14 +55,15 @@ Prefer to do it by hand? Follow the sections below.
 - `add_sentence`: natural sentence + meaning, optional original sentence and `expressions[]` (each becomes a linked card).
 - `list_inbox`: list saved items (use it to avoid duplicates). Duplicates by English text are skipped.
 
-## Two storage modes
+## Storage modes
 
 | Mode | When | Where items go | Works on |
 |---|---|---|---|
+| **Token** (recommended, v2) | `ENGLISH_NOTEBOOK_TOKEN` is set | the English Notebook agent API saves to your account | everywhere you are signed in; no key on your machine |
 | **Firestore** (recommended) | `ENGLISH_NOTEBOOK_SERVICE_ACCOUNT` and `ENGLISH_NOTEBOOK_UID` are set | `users/<uid>/items` in Firestore | the hosted site, your phone, localhost: everywhere you are signed in |
 | **inbox.json** (default) | neither variable is set | `../english-notebook/inbox.json` | only the app served from that folder on the same PC (`localhost`) |
 
-Set both variables or neither. If only one is set, the server exits with an error.
+For the two key modes: set both variables or neither (one alone is an error). Do not mix the token with the key variables. `ENGLISH_NOTEBOOK_API` overrides the API address (for a self-hosted Worker).
 
 ## Set up Firestore mode
 

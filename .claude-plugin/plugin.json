@@ -1,25 +1,29 @@
 {
   "name": "english-notebook",
   "displayName": "English Notebook",
-  "version": "1.0.0",
-  "description": "Learn English from your real work: the English Coach skill corrects your English and saves sentences and expressions to your English Notebook app through an MCP server.",
-  "author": { "name": "TienNHM", "url": "https://github.com/TienNHM" },
+  "version": "2.0.0",
+  "description": "Learn English from your real work: the English Coach skill corrects your English and saves sentences and expressions to your English Notebook app. Needs only a personal token from the app.",
+  "author": {
+    "name": "TienNHM",
+    "url": "https://github.com/TienNHM"
+  },
   "homepage": "https://english-notebook.tiennhm.io.vn",
   "repository": "https://github.com/TienNHM/english-notebook-mcp",
   "license": "MIT",
-  "keywords": ["english", "learning", "vocabulary", "mcp", "firebase"],
+  "keywords": [
+    "english",
+    "learning",
+    "vocabulary",
+    "mcp",
+    "firebase"
+  ],
   "userConfig": {
-    "service_account_path": {
-      "type": "file",
-      "title": "Firebase service account key (.json)",
-      "description": "Path to the service account key of your English Notebook Firebase project. Keep this file outside any git repo.",
-      "required": true
-    },
-    "uid": {
+    "token": {
       "type": "string",
-      "title": "Your Firebase user id (uid)",
-      "description": "The uid you sign in with: Firebase console, Authentication, Users.",
-      "required": true
+      "title": "English Notebook agent token",
+      "description": "In the English Notebook app (english-notebook.tiennhm.io.vn) open Library, then 'Kết nối AI agent', and create a token. It starts with enb_.",
+      "required": true,
+      "sensitive": true
     }
   }
 }
