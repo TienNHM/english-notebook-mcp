@@ -3,6 +3,40 @@
 Small MCP server (stdio) so Claude Code can save vocabulary and sentences into
 [English Notebook](https://github.com/TienNHM/english-notebook).
 
+## Quick start: let your AI agent set everything up
+
+Copy this prompt into your AI agent (Claude Code, Cursor, Codex, Copilot, Windsurf...) and answer its questions. It installs the MCP server **and** the English Coach skill for that agent.
+
+````text
+Set up English Notebook for me, step by step. Ask me only when you need an answer.
+
+1. Check that Node.js 18+ and git are installed. If not, tell me how to install them and stop.
+2. Ask me where to put the project (suggest a folder next to my other projects), then run:
+   git clone https://github.com/TienNHM/english-notebook-mcp.git <folder>
+   cd <folder> && npm install
+3. Ask me which storage mode I want:
+   - Firestore (works on every device): I need a Firebase service account key file (.json) and my user id (uid).
+     Tell me how to get them: Firebase console -> Project settings -> Service accounts -> Generate new private key;
+     uid is in Authentication -> Users. Ask me only for the FILE PATH and the uid.
+     Never open, print, copy or commit the key file. Never put it inside a git repo.
+   - inbox.json (no key, localhost only): set no variables.
+4. Register the MCP server named "english-notebook" for the agent you are running in, with `node <folder>/server.mjs`
+   and the two env vars ENGLISH_NOTEBOOK_SERVICE_ACCOUNT (key path) and ENGLISH_NOTEBOOK_UID (uid) in Firestore mode:
+   - Claude Code: claude mcp add --scope user --env ... english-notebook -- node <folder>/server.mjs
+   - Cursor: ~/.cursor/mcp.json   - other agents: that agent's MCP config file (JSON "mcpServers").
+   Set BOTH env vars or neither.
+5. Install the English Coach skill for this agent, copying from <folder>:
+   - Claude Code: skills/english-coach -> ~/.claude/skills/english-coach
+   - Cursor: agents/cursor/english-coach.mdc -> .cursor/rules/english-coach.mdc in my project
+   - others: append agents/AGENTS.snippet.md to my AGENTS.md (or the agent's rules file)
+   Do not overwrite an existing file without asking me.
+6. Tell me to restart the agent (MCP servers load at start), then how to test:
+   ask "lưu từ rollback (quay lại bản cũ)" and check the word appears in the app.
+7. At the end, list what you changed (paths) and remind me to keep the key file secret.
+````
+
+Prefer to do it by hand? Follow the sections below.
+
 ## Tools
 
 - `add_vocabulary`: word or phrase + Vietnamese meaning, optional example, note, tags.
