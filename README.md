@@ -3,6 +3,8 @@
 Small MCP server (stdio) so Claude Code can save vocabulary and sentences into
 [English Notebook](https://github.com/TienNHM/english-notebook).
 
+> **Version 1.0 is for people who run their own copy of the app.** Firestore mode needs a Firebase service account key of *your own* Firebase project (see [English Notebook](https://github.com/TienNHM/english-notebook) to deploy your copy). Version 2.0 will use a personal token instead, so no key file is needed. See [CHANGELOG](CHANGELOG.md).
+
 ## Install as a Claude Code plugin (easiest for Claude Code)
 
 This repo is also a Claude Code plugin and a one-plugin marketplace. It installs the MCP server **and** the English Coach skill together:

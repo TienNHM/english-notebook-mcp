@@ -1,7 +1,7 @@
 {
   "name": "english-notebook",
   "displayName": "English Notebook",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Learn English from your real work: the English Coach skill corrects your English and saves sentences and expressions to your English Notebook app through an MCP server.",
   "author": { "name": "TienNHM", "url": "https://github.com/TienNHM" },
   "homepage": "https://english-notebook.tiennhm.io.vn",
