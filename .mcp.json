@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "english-notebook": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server.mjs"],
+      "env": {
+        "ENGLISH_NOTEBOOK_SERVICE_ACCOUNT": "${user_config.service_account_path}",
+        "ENGLISH_NOTEBOOK_UID": "${user_config.uid}"
+      }
+    }
+  }
+}

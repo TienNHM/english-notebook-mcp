@@ -13,9 +13,9 @@ const body = m[2].trim();
 
 export const outputs = {
   // Cursor project rule: always applied
-  "agents/cursor/english-coach.mdc": `---\ndescription: ${description}\nalwaysApply: true\n---\n\n${body}\n`,
+  "rules/cursor/english-coach.mdc": `---\ndescription: ${description}\nalwaysApply: true\n---\n\n${body}\n`,
   // AGENTS.md section (Codex, Copilot, Windsurf, Gemini CLI, Zed... read AGENTS.md or a similar file)
-  "agents/AGENTS.snippet.md": `<!-- english-coach: start (generated from skills/english-coach/SKILL.md) -->\n${body}\n<!-- english-coach: end -->\n`,
+  "rules/AGENTS.snippet.md": `<!-- english-coach: start (generated from skills/english-coach/SKILL.md) -->\n${body}\n<!-- english-coach: end -->\n`,
 };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

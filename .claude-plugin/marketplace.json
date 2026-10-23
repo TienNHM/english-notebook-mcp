@@ -1,0 +1,14 @@
+{
+  "name": "tiennhm",
+  "owner": { "name": "TienNHM", "url": "https://github.com/TienNHM" },
+  "description": "Plugins by TienNHM",
+  "plugins": [
+    {
+      "name": "english-notebook",
+      "source": "./",
+      "description": "English Coach skill + MCP server that saves your sentences and vocabulary to the English Notebook app.",
+      "category": "learning",
+      "tags": ["english", "vocabulary", "mcp"]
+    }
+  ]
+}

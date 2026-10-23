@@ -3,6 +3,19 @@
 Small MCP server (stdio) so Claude Code can save vocabulary and sentences into
 [English Notebook](https://github.com/TienNHM/english-notebook).
 
+## Install as a Claude Code plugin (easiest for Claude Code)
+
+This repo is also a Claude Code plugin and a one-plugin marketplace. It installs the MCP server **and** the English Coach skill together:
+
+```bash
+claude plugin marketplace add TienNHM/english-notebook-mcp
+claude plugin install english-notebook@tiennhm
+```
+
+Or, inside Claude Code (version 2.1.275 or later): `/plugin install english-notebook --marketplace TienNHM/english-notebook-mcp`.
+Claude Code asks for two values: the path of your Firebase service account key and your uid (see "Set up Firestore mode" below for where to find them).
+To change them later: `/plugin configure english-notebook@tiennhm`. Restart Claude Code after installing. The skill is then available as `english-notebook:english-coach` and also starts by itself on your messages.
+
 ## Quick start: let your AI agent set everything up
 
 Copy this prompt into your AI agent (Claude Code, Cursor, Codex, Copilot, Windsurf...) and answer its questions. It installs the MCP server **and** the English Coach skill for that agent.
@@ -27,8 +40,8 @@ Set up English Notebook for me, step by step. Ask me only when you need an answe
    Set BOTH env vars or neither.
 5. Install the English Coach skill for this agent, copying from <folder>:
    - Claude Code: skills/english-coach -> ~/.claude/skills/english-coach
-   - Cursor: agents/cursor/english-coach.mdc -> .cursor/rules/english-coach.mdc in my project
-   - others: append agents/AGENTS.snippet.md to my AGENTS.md (or the agent's rules file)
+   - Cursor: rules/cursor/english-coach.mdc -> .cursor/rules/english-coach.mdc in my project
+   - others: append rules/AGENTS.snippet.md to my AGENTS.md (or the agent's rules file)
    Do not overwrite an existing file without asking me.
 6. Tell me to restart the agent (MCP servers load at start), then how to test:
    ask "lưu từ rollback (quay lại bản cũ)" and check the word appears in the app.
@@ -106,8 +119,8 @@ The skill lives in [`skills/english-coach/SKILL.md`](skills/english-coach/SKILL.
 |---|---|
 | **Claude Code** | Copy the folder `skills/english-coach` to `~/.claude/skills/english-coach` (Windows: `%USERPROFILE%\.claude\skills\english-coach`). Use `.claude/skills/` inside a project to limit it to that project. |
 | **Claude Desktop / claude.ai** | Zip the folder `english-coach` (with `SKILL.md` inside) and upload it in Settings → Capabilities → Skills. |
-| **Cursor** | Copy [`agents/cursor/english-coach.mdc`](agents/cursor/english-coach.mdc) to `<your project>/.cursor/rules/english-coach.mdc` (it is set to always apply). |
-| **Codex, Copilot, Windsurf, Gemini CLI and others** | Paste [`agents/AGENTS.snippet.md`](agents/AGENTS.snippet.md) into your `AGENTS.md` (or the agent's rules / instructions file). |
+| **Cursor** | Copy [`rules/cursor/english-coach.mdc`](rules/cursor/english-coach.mdc) to `<your project>/.cursor/rules/english-coach.mdc` (it is set to always apply). |
+| **Codex, Copilot, Windsurf, Gemini CLI and others** | Paste [`rules/AGENTS.snippet.md`](rules/AGENTS.snippet.md) into your `AGENTS.md` (or the agent's rules / instructions file). |
 
 Then connect the MCP server to the same agent. Claude Code uses the `claude mcp add` command above. Other agents use a JSON config
 (Cursor: `~/.cursor/mcp.json`; check your agent's docs for the file):
