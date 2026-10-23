@@ -59,12 +59,44 @@ Optional: set `ENGLISH_NOTEBOOK_INBOX` to use another inbox path. The app import
 | `PERMISSION_DENIED` or `Cloud Firestore API has not been used` | Create the Firestore database in the Firebase console first. Check that the key belongs to the same project. |
 | Items do not show in the app | Check that the uid is the one you sign in with (Authentication → Users). A different uid writes to a different user's data. |
 | Items show only on `localhost` | You are in inbox mode. Set both variables to use Firestore mode. |
-| Claude never calls the tool | Add the rule from the tip below to your `CLAUDE.md`, or ask directly ("save this to my notebook"). |
+| Claude never calls the tool | Install the English Coach skill (section above), or ask directly ("save this to my notebook"). |
 | Changed the env variables but nothing changed | Remove and add the server again (`claude mcp remove english-notebook`), then restart Claude Code. |
 
-## Tip: tell Claude when to save
+## Install the English Coach skill (needed to use the app with an AI agent)
 
-Add to your CLAUDE.md, for example:
+The MCP server only gives the agent the *tools*. The **skill** tells it *when and how* to use them: it corrects your English,
+answers in simple English + Vietnamese, then saves the sentence and 2-3 expressions to your notebook after each Vietnamese request.
+The skill lives in [`skills/english-coach/SKILL.md`](skills/english-coach/SKILL.md) (the single source). Install it for your agent:
 
-> When I ask for help in Vietnamese, after answering call `add_sentence` with the natural English version
-> and 2-3 useful expressions (tag: work). Do not save things I did not ask about.
+| Agent | Install |
+|---|---|
+| **Claude Code** | Copy the folder `skills/english-coach` to `~/.claude/skills/english-coach` (Windows: `%USERPROFILE%\.claude\skills\english-coach`). Use `.claude/skills/` inside a project to limit it to that project. |
+| **Claude Desktop / claude.ai** | Zip the folder `english-coach` (with `SKILL.md` inside) and upload it in Settings → Capabilities → Skills. |
+| **Cursor** | Copy [`agents/cursor/english-coach.mdc`](agents/cursor/english-coach.mdc) to `<your project>/.cursor/rules/english-coach.mdc` (it is set to always apply). |
+| **Codex, Copilot, Windsurf, Gemini CLI and others** | Paste [`agents/AGENTS.snippet.md`](agents/AGENTS.snippet.md) into your `AGENTS.md` (or the agent's rules / instructions file). |
+
+Then connect the MCP server to the same agent. Claude Code uses the `claude mcp add` command above. Other agents use a JSON config
+(Cursor: `~/.cursor/mcp.json`; check your agent's docs for the file):
+
+```json
+{
+  "mcpServers": {
+    "english-notebook": {
+      "command": "node",
+      "args": ["D:/path/to/english-notebook-mcp/server.mjs"],
+      "env": {
+        "ENGLISH_NOTEBOOK_SERVICE_ACCOUNT": "D:/path/to/key.json",
+        "ENGLISH_NOTEBOOK_UID": "<your uid>"
+      }
+    }
+  }
+}
+```
+
+Without the skill the agent can still save when you ask directly ("save this to my notebook"), but it will not coach you or save by itself.
+Without the MCP server the skill still coaches you, and skips the saving.
+
+Say **"skip coach"** in a message to turn the coaching and the saving off for that turn.
+
+The Cursor and `AGENTS.md` files are generated from `SKILL.md`. After editing the skill run `npm run build:agents`, and `npm test` checks that
+the copies are up to date and that every tool the skill names exists in `server.mjs`.
