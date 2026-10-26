@@ -1,7 +1,7 @@
 {
   "name": "english-notebook",
   "displayName": "English Notebook",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Learn English from your real work: the English Coach skill corrects your English and saves sentences and expressions to your English Notebook app. Needs only a personal token from the app.",
   "author": {
     "name": "TienNHM",
@@ -24,6 +24,17 @@
       "description": "In the English Notebook app (english-notebook.tiennhm.io.vn) open Library, then 'Kết nối AI agent', and create a token. It starts with enb_.",
       "required": true,
       "sensitive": true
+    }
+  },
+  "mcpServers": {
+    "english-notebook": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/server.mjs"
+      ],
+      "env": {
+        "ENGLISH_NOTEBOOK_TOKEN": "${user_config.token}"
+      }
     }
   }
 }

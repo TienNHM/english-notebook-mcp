@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1
+
+- Fix: opening Claude Code inside this repo (or a clone) no longer loads a broken project MCP server. The plugin's MCP config moved from a root `.mcp.json` (read as project config, where `${CLAUDE_PLUGIN_ROOT}` is not set) into `plugin.json`.
+
 ## 2.0.0
 
 - **Token mode:** the plugin and server need only a personal token (`ENGLISH_NOTEBOOK_TOKEN`) created in the app. No Firebase key or uid. The server talks to the English Notebook agent API (Cloudflare Worker).
