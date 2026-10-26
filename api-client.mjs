@@ -1,6 +1,6 @@
 // Token mode: talks to the English Notebook agent API (a Cloudflare Worker) with a personal token.
 // No Firebase key is needed on the user's machine.
-export const DEFAULT_API_URL = "https://agent-api.tiennhm.io.vn";
+export const DEFAULT_API_URL = "https://english-notebook-agent-api.tiennhm-it.workers.dev";
 
 const HINT = {
   401: "The token is invalid or was revoked. In the English Notebook app open 'Kết nối AI agent', create a new token and update the plugin setting.",
