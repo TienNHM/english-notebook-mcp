@@ -1,16 +1,28 @@
 {
   "name": "english-notebook-mcp",
   "version": "2.0.1",
-  "private": true,
   "type": "module",
   "main": "server.mjs",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
-    "firebase-admin": "^14.5.0",
     "zod": "^4.6.7"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "build:agents": "node scripts/build-agent-rules.mjs"
+  },
+  "bin": {
+    "english-notebook-mcp": "bin/cli.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "skills",
+    "rules",
+    "server.mjs",
+    "api-client.mjs"
+  ],
+  "devDependencies": {
+    "firebase-admin": "^14.5.0"
   }
 }

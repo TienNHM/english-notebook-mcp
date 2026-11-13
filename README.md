@@ -5,6 +5,26 @@ Small MCP server (stdio) so Claude Code can save vocabulary and sentences into
 
 > **Version 2.0:** you only need a **personal token** from the app. No Firebase key, no uid. Self-hosters can still use the key mode (see "Set up Firestore mode"). See [CHANGELOG](CHANGELOG.md).
 
+## Quick install with one command (npx)
+
+Needs Node.js 18+. Get a token in the app (**Profile → 🤖 Kết nối AI agent → Tạo token**), then run:
+
+```bash
+npx github:TienNHM/english-notebook-mcp --token enb_YOUR_TOKEN --always-on
+```
+
+It adds the MCP server to Claude Code (user scope, started through npx, so no folder to clone), installs the English Coach skill into `~/.claude/skills/english-coach`, and with `--always-on` adds a short rule to `~/.claude/CLAUDE.md` so the coach runs on every reply. Restart Claude Code after it.
+
+| Option | Meaning |
+|---|---|
+| `--token enb_...` | Your token. Or set `ENGLISH_NOTEBOOK_TOKEN`; if missing, you are asked. |
+| `--agent claude|cursor|all` | Default `claude`. `cursor` writes `~/.cursor/mcp.json` and `.cursor/rules/english-coach.mdc` in the current folder. |
+| `--always-on` | Claude Code only: add the always-on rule to `~/.claude/CLAUDE.md`. |
+| `--scope user|local|project` | Claude Code MCP scope (default `user`). |
+| `--dry-run` | Show the steps and change nothing (the token is hidden in the output). |
+
+Undo: `npx github:TienNHM/english-notebook-mcp uninstall --agent all`. The command is safe to run again (it replaces the old entry; an old skill file is saved as `SKILL.md.bak`). Your token is stored in the agent's own config file, like any MCP env value.
+
 ## Install as a Claude Code plugin (easiest for Claude Code)
 
 This repo is also a Claude Code plugin and a one-plugin marketplace. It installs the MCP server **and** the English Coach skill together:

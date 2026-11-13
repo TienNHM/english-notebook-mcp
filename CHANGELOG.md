@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Quick installer: `npx github:TienNHM/english-notebook-mcp --token enb_... [--agent claude|cursor|all] [--always-on]` adds the MCP server, the coach skill and (optional) an always-on rule; `uninstall` removes them; `serve` starts the server (the installed config uses it). `firebase-admin` moved to devDependencies (key mode needs `npm install` in a clone), so npx stays light.
+
 ## 2.0.1
 
 - Fix: opening Claude Code inside this repo (or a clone) no longer loads a broken project MCP server. The plugin's MCP config moved from a root `.mcp.json` (read as project config, where `${CLAUDE_PLUGIN_ROOT}` is not set) into `plugin.json`.
