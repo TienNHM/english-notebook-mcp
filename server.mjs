@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApiClient, ApiError } from "./api-client.mjs";
 import { createRowsCache } from "./lib/known-cache.mjs";
+import { normalizeTags, INBOX_STATUS } from "./lib/card-fields.mjs";
 
 // Three storage modes:
 //  0) Token (when ENGLISH_NOTEBOOK_TOKEN is set): talks to the English Notebook agent API with a personal token.
@@ -45,7 +46,7 @@ if (SA) {
 
 const uid = () => Date.now().toString(36) + randomBytes(3).toString("hex");
 const clean = s => String(s ?? "").trim();
-const tagList = t => (t ?? []).map(x => clean(x).toLowerCase()).filter(Boolean);
+const tagList = normalizeTags;
 
 async function readInbox() {
   try { return JSON.parse(await readFile(INBOX, "utf8")); }
@@ -71,7 +72,7 @@ async function saveNew(entries) {
 
 const mk = (o) => ({
   id: uid(), example: "", note: "", original: "", sourceId: "", source: "claude", tags: [],
-  box: 0, due: Date.now(), created: Date.now(), reviews: 0, ...o,
+  box: 0, due: Date.now(), created: Date.now(), reviews: 0, lapses: 0, status: INBOX_STATUS, ...o,
 });
 
 const server = new McpServer({ name: "english-notebook", version: "2.0.0" });

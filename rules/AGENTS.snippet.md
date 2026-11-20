@@ -71,11 +71,12 @@ Do this **after** the main work is finished, so it never delays the answer.
   - `text`: the natural English sentence from the coach block
   - `meaning`: its Vietnamese meaning
   - `original`: the user's original Vietnamese message
-  - `expressions`: 2–3 useful phrases, each `{text, meaning}`
-  - `tags`: `["work"]`
-- **The user says "lưu từ X"** (or "save the word X"): call `add_vocabulary` with `text`, `meaning` (Vietnamese), a short English `example`, tags `["work"]`.
+  - `expressions`: at most 3 useful phrases, each `{text, meaning}`. Save fewer, higher-value items: skip trivial or very common words and phrases, and use fewer than 3 (or none) when nothing is worth learning
+  - `tags`: 1–3 specific lowercase **topic** tags chosen from what the sentence is about, e.g. `git`, `meeting`, `estimate`, `email`, `review`, `deploy`, `bug`, `planning`, `standup`, `support`, `design`, `testing`. Do not tag everything `work`; `work` may be added only as a last extra tag, e.g. `["git", "review"]`
+- **The user says "lưu từ X"** (or "save the word X"): call `add_vocabulary` with `text`, `meaning` (Vietnamese), a short English `example`, 1–3 lowercase topic tags (same rule as above, no blanket `work`).
 - **Do not save** pure technical terms (deploy, merge, PR…), messages written only in English, or anything when you are unsure it is useful.
 - **Maybe a duplicate?** Call `list_inbox` with a `query` first. The server also skips exact duplicates.
+- Saved cards land in the user's **"Mới"** inbox in the app, where the user keeps or archives them. This is why quality beats quantity.
 - Mention the save in one short line, e.g. `💾 Saved to English Notebook.`
 
 ## Example
