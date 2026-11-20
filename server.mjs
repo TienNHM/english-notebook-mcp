@@ -61,7 +61,7 @@ const readAll = async () => col ? (await col.get()).docs.map(d => d.data()) : re
 async function saveNew(entries) {
   if (col) {
     const batch = col.firestore.batch();
-    for (const e of entries) batch.set(col.doc(e.id), e);
+    for (const e of entries) batch.set(col.doc(e.id), { ...e, updated: Date.now() }); // `updated` lets the app fetch only changed cards
     await batch.commit();
   } else {
     await writeInbox([...(await readInbox()), ...entries]);
