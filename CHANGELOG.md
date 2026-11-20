@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Key mode: the list of known texts is cached for 10 minutes instead of reading the whole notebook on every save (Firestore bills one read per card); a spent Firestore quota (`RESOURCE_EXHAUSTED`) gives a clear message.
 - Quick installer: `npx github:TienNHM/english-notebook-mcp --token enb_... [--agent claude|cursor|all] [--always-on]` adds the MCP server, the coach skill and (optional) an always-on rule; `uninstall` removes them; `serve` starts the server (the installed config uses it). `firebase-admin` moved to devDependencies (key mode needs `npm install` in a clone), so npx stays light.
 
 ## 2.0.1

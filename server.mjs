@@ -85,8 +85,29 @@ const text = z.string().min(1).describe("English text");
 const meaning = z.string().min(1).describe("Vietnamese meaning");
 const tags = z.array(z.string()).optional().describe("Short tags, e.g. work, git, meeting");
 
+// Firestore bills one read per card, so reading the whole notebook on every save is costly (600 cards = 600 reads).
+// In Firestore mode the list of known texts is kept for 10 minutes (inbox.json is a local file, always read fresh).
+let known = null, knownAt = 0;
+const KNOWN_TTL = 10 * 60_000;
+async function knownTexts() {
+  if (col && known && Date.now() - knownAt < KNOWN_TTL) return known;
+  const set = new Set((await readAll()).map(i => String(i.text).toLowerCase()));
+  if (col) { known = set; knownAt = Date.now(); }
+  return set;
+}
+const quotaHit = e => e?.code === 8 || /RESOURCE_EXHAUSTED/.test(String(e?.message));
+const QUOTA_MSG = "Firestore quota for today is used up. Try again later (it resets every day), or check Usage in the Firebase console.";
+
 async function add(entries) {
-  const seen = new Set((await readAll()).map(i => String(i.text).toLowerCase()));
+  try { return await addNow(entries); }
+  catch (e) {
+    known = null; // do not trust the cache after a failure
+    if (quotaHit(e)) return { isError: true, content: [{ type: "text", text: QUOTA_MSG }] };
+    throw e;
+  }
+}
+async function addNow(entries) {
+  const seen = await knownTexts();
   const added = [], skipped = [], fresh = [];
   for (const e of entries) {
     if (seen.has(e.text.toLowerCase())) { skipped.push(e.text); continue; }
