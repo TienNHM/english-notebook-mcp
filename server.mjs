@@ -6,6 +6,7 @@ import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApiClient, ApiError } from "./api-client.mjs";
+import { createRowsCache } from "./lib/known-cache.mjs";
 
 // Three storage modes:
 //  0) Token (when ENGLISH_NOTEBOOK_TOKEN is set): talks to the English Notebook agent API with a personal token.
@@ -87,21 +88,16 @@ const tags = z.array(z.string()).optional().describe("Short tags, e.g. work, git
 
 // Firestore bills one read per card, so reading the whole notebook on every save is costly (600 cards = 600 reads).
 // In Firestore mode the list of known texts is kept for 10 minutes (inbox.json is a local file, always read fresh).
-let known = null, knownAt = 0;
-const KNOWN_TTL = 10 * 60_000;
-async function knownTexts() {
-  if (col && known && Date.now() - knownAt < KNOWN_TTL) return known;
-  const set = new Set((await readAll()).map(i => String(i.text).toLowerCase()));
-  if (col) { known = set; knownAt = Date.now(); }
-  return set;
-}
+const rowsCache = createRowsCache();
+const allRows = () => col ? rowsCache.get(readAll) : readAll();
+async function knownTexts() { return new Set((await allRows()).map(i => String(i.text).toLowerCase())); }
 const quotaHit = e => e?.code === 8 || /RESOURCE_EXHAUSTED/.test(String(e?.message));
 const QUOTA_MSG = "Firestore quota for today is used up. Try again later (it resets every day), or check Usage in the Firebase console.";
 
 async function add(entries) {
   try { return await addNow(entries); }
   catch (e) {
-    known = null; // do not trust the cache after a failure
+    rowsCache.reset(); // do not trust the cache after a failure
     if (quotaHit(e)) return { isError: true, content: [{ type: "text", text: QUOTA_MSG }] };
     throw e;
   }
@@ -114,7 +110,7 @@ async function addNow(entries) {
     seen.add(e.text.toLowerCase());
     fresh.push(e); added.push(e.text);
   }
-  if (fresh.length) await saveNew(fresh);
+  if (fresh.length) { await saveNew(fresh); if (col) rowsCache.add(fresh); }
   const where = !fresh.length ? "Nothing new to save." : col ? "Saved to Firestore; it shows in the app right away." : "Saved to inbox.json; open the app (localhost) to import.";
   return { content: [{ type: "text", text: `Added ${added.length}${skipped.length ? `, skipped ${skipped.length} duplicate(s): ${skipped.join(", ")}` : ""}. ${where}` }] };
 }
@@ -157,7 +153,9 @@ server.registerTool("list_inbox", {
 }, async ({ query, limit }) => {
   if (api) return viaApi(() => api.listItems({ query, limit }));
   const q = clean(query).toLowerCase();
-  const rows = (await readAll())
+  // no filter in Firestore mode: ask for just the newest cards (a few reads) instead of the whole notebook
+  const newest = col && !q ? (await col.orderBy("created", "desc").limit(limit ?? 20).get()).docs.map(d => d.data()) : null;
+  const rows = (newest ?? await allRows())
     .sort((a, b) => (a.created ?? 0) - (b.created ?? 0))
     .filter(i => !q || (i.text + " " + i.meaning).toLowerCase().includes(q))
     .slice(-(limit ?? 20))
